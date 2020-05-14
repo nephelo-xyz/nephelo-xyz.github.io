@@ -1,0 +1,406 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="format-detection" content="telephone=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><link rel="icon" href="/assets/title/favicon-16x16.png?v=2.0.0" type="image/png" sizes="16x16"><link rel="icon" href="/assets/title/favicon-32x32.png?v=2.0.0" type="image/png" sizes="32x32"><meta name="description" content="最近在着手搭建Kubernetes的集群，确实还挺多问题，所以整理出来记录一下。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes本地集群搭建">
+<meta property="og:url" content="https://nephelo-xyz.github.io/2020/04/20/K8S%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA%E6%A0%BC%E5%BC%8F%E6%95%B4%E7%90%86/index.html">
+<meta property="og:site_name" content="nephelo">
+<meta property="og:description" content="最近在着手搭建Kubernetes的集群，确实还挺多问题，所以整理出来记录一下。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-04-20T12:46:25.000Z">
+<meta property="article:modified_time" content="2020-05-14T05:45:34.050Z">
+<meta property="article:author" content="nephelo">
+<meta property="article:tag" content="Devops">
+<meta name="twitter:card" content="summary"><meta name="keywords" content="nephelo, nephelo"><meta name="description" content=""><title>Kubernetes本地集群搭建 | nephelo</title><link ref="canonical" href="https://nephelo-xyz.github.io/2020/04/20/K8S%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA%E6%A0%BC%E5%BC%8F%E6%95%B4%E7%90%86/"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.1/css/all.min.css" type="text/css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js@1.0.16/dist/css/share.min.css" type="text/css"><link rel="stylesheet" href="/css/index.css?v=2.0.0"><script>var Stun = window.Stun || {};
+var CONFIG = {
+  root: '/',
+  algolia: undefined,
+  fontIcon: {"prompt":{"success":"fas fa-check-circle","info":"fas fa-arrow-circle-right","warning":"fas fa-exclamation-circle","error":"fas fa-times-circle"},"copyBtn":"fas fa-copy"},
+  sidebar: {"offsetTop":"20px","tocMaxDepth":6},
+  header: {"enable":true,"showOnPost":true,"scrollDownIcon":true},
+  postWidget: {"endText":true},
+  nightMode: {"enable":true},
+  back2top: {"enable":true},
+  codeblock: {"style":"carbon","highlight":"ocean","wordWrap":false},
+  reward: false,
+  fancybox: false,
+  zoomImage: {"gapAside":"20px"},
+  galleryWaterfall: undefined,
+  lazyload: false,
+  pjax: undefined,
+  externalLink: {"icon":{"enable":true,"name":"fas fa-external-link-alt"}},
+  shortcuts: undefined,
+  prompt: {"copyButton":"复制","copySuccess":"复制成功","copyError":"复制失败"},
+  sourcePath: {"js":"js","css":"css","images":"images"},
+};
+
+window.CONFIG = CONFIG;</script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="nephelo" type="application/atom+xml">
+</head><body><div class="container" id="container"><header class="header" id="header"><div class="header-inner"><nav class="header-nav header-nav--fixed"><div class="header-nav-inner"><div class="header-nav-menubtn"><i class="fas fa-bars"></i></div><div class="header-nav-menu"><div class="header-nav-menu-item"><a class="header-nav-menu-item__link" href="/"><span class="header-nav-menu-item__icon"><i class="fas fa-home"></i></span><span class="header-nav-menu-item__text">首页</span></a></div><div class="header-nav-menu-item"><a class="header-nav-menu-item__link" href="/categories/"><span class="header-nav-menu-item__icon"><i class="fas fa-layer-group"></i></span><span class="header-nav-menu-item__text">分类</span></a></div><div class="header-nav-menu-item"><a class="header-nav-menu-item__link" href="/archives/"><span class="header-nav-menu-item__icon"><i class="fas fa-folder-open"></i></span><span class="header-nav-menu-item__text">归档</span></a></div><div class="header-nav-menu-item"><a class="header-nav-menu-item__link" href="javascript:;" onclick="return false;"><span class="header-nav-menu-item__icon"><i class="fas fa-users"></i></span><span class="header-nav-menu-item__text">关于</span></a><div class="header-nav-submenu"><div class="header-nav-submenu-item"><a class="header-nav-submenu-item__link" href="/aboutme/"><span class="header-nav-submenu-item__icon"><i class="fas fa-message"></i></span><span class="header-nav-submenu-item__text">作者</span></a></div><div class="header-nav-submenu-item"><a class="header-nav-submenu-item__link" href="/messageboard/"><span class="header-nav-submenu-item__icon"><i class="fas fa-message"></i></span><span class="header-nav-submenu-item__text">留言</span></a></div></div></div><div class="header-nav-menu-item"><a class="header-nav-menu-item__link" href="/tags/"><span class="header-nav-menu-item__icon"><i class="fas fa-tags"></i></span><span class="header-nav-menu-item__text">标签</span></a></div></div><div class="header-nav-search"><span class="header-nav-search__icon"><i class="fas fa-search"></i></span><span class="header-nav-search__text">搜索</span></div><div class="header-nav-mode"><div class="mode"><div class="mode-track"><span class="mode-track-moon"></span><span class="mode-track-sun"></span></div><div class="mode-thumb"></div></div></div></div></nav><div class="header-banner"><div class="header-banner-info"><div class="header-banner-info__title">nephelo</div><div class="header-banner-info__subtitle"></div></div><div class="header-banner-arrow"><div class="header-banner-arrow__icon"><i class="fas fa-angle-down"></i></div></div></div></div></header><main class="main" id="main"><div class="main-inner"><div class="content-wrap" id="content-wrap"><div class="content" id="content"><!-- Just used to judge whether it is an article page--><div id="is-post"></div><div class="post"><header class="post-header"><h1 class="post-title">Kubernetes本地集群搭建</h1><div class="post-meta"><span class="post-meta-item post-meta-item--createtime"><span class="post-meta-item__icon"><i class="far fa-calendar-plus"></i></span><span class="post-meta-item__info">发表于</span><span class="post-meta-item__value">2020-04-20</span></span><span class="post-meta-item post-meta-item--updatetime"><span class="post-meta-item__icon"><i class="far fa-calendar-check"></i></span><span class="post-meta-item__info">更新于</span><span class="post-meta-item__value">2020-05-14</span></span><span class="post-meta-item post-meta-item--visitors"><span class="post-meta-item__icon"><i class="fas fa-eye"></i></span><span class="post-meta-item__info">阅读次数</span><span class="post-meta-item__value" id="busuanzi_value_page_pv"></span></span></div></header><div class="post-body"><blockquote>
+<p>最近在着手搭建Kubernetes的集群，确实还挺多问题，所以整理出来记录一下。</p>
+</blockquote>
+<a id="more"></a>
+
+
+        <h2 id="1-版本统一"   >
+          <a href="#1-版本统一" class="heading-link"><i class="fas fa-link"></i></a>1 版本统一</h2>
+      <ul>
+<li>Docker 18.09.0</li>
+<li>kubeadm-1.14.0-0 </li>
+<li>kubelet-1.14.0-0 </li>
+<li>kubectl-1.14.0-0<ul>
+<li>k8s.gcr.io/kube-apiserver:v1.14.0</li>
+<li>k8s.gcr.io/kube-controller-manager:v1.14.0</li>
+<li>k8s.gcr.io/kube-scheduler:v1.14.0</li>
+<li>k8s.gcr.io/kube-proxy:v1.14.0</li>
+<li>k8s.gcr.io/pause:3.1</li>
+<li>k8s.gcr.io/etcd:3.3.10</li>
+<li>k8s.gcr.io/coredns:1.3.1</li>
+</ul>
+</li>
+<li>calico:v3.9</li>
+</ul>
+
+        <h2 id="2-准备3台centos"   >
+          <a href="#2-准备3台centos" class="heading-link"><i class="fas fa-link"></i></a>2 准备3台centos</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">01 `搭建前准备`</span><br><span class="line">mkdir D:\VM\k8s-docker-centos7 【创建目录】</span><br><span class="line">cd D:\VM\k8s-docker-centos7 【切换目录】</span><br><span class="line">type nul&gt;Vagrantfile 【创建Vagrantfile文件】</span><br><span class="line">echo [fileContent]&gt;Vagrantfile 【编辑文件】</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">boxes = [</span><br><span class="line">	&#123;</span><br><span class="line">		:name =&gt; "master-kubeadm-k8s",</span><br><span class="line">		:eth1 =&gt; "192.168.31.100",</span><br><span class="line">		:mem =&gt; "2048",</span><br><span class="line">		:cpu =&gt; "2",</span><br><span class="line">		:sshport =&gt; 22230</span><br><span class="line">	&#125;,</span><br><span class="line">	&#123;</span><br><span class="line">		:name =&gt; "worker01-kubeadm-k8s",</span><br><span class="line">		:eth1 =&gt; "192.168.31.101",</span><br><span class="line">		:mem =&gt; "2048",</span><br><span class="line">		:cpu =&gt; "2",</span><br><span class="line">		:sshport =&gt; 22231</span><br><span class="line">	&#125;,</span><br><span class="line">	&#123;</span><br><span class="line">		:name =&gt; "worker02-kubeadm-k8s",</span><br><span class="line">		:eth1 =&gt; "192.168.31.102",</span><br><span class="line">		:mem =&gt; "2048",</span><br><span class="line">		:cpu =&gt; "2",</span><br><span class="line">		:sshport =&gt; 22232</span><br><span class="line">	&#125;</span><br><span class="line">]</span><br><span class="line">Vagrant.configure(2) do |config|</span><br><span class="line">	config.vm.box = "centos/7"</span><br><span class="line">	boxes.each do |opts|</span><br><span class="line">		config.vm.define opts[:name] do |config|</span><br><span class="line">			config.vm.hostname = opts[:name]</span><br><span class="line">			config.vm.network :public_network, ip: opts[:eth1]</span><br><span class="line">			config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", disabled: "true"</span><br><span class="line">		config.vm.network "forwarded_port", guest: 22, host: opts[:sshport]</span><br><span class="line">			config.vm.provider "vmware_fusion" do |v|</span><br><span class="line">				v.vmx["memsize"] = opts[:mem]</span><br><span class="line">				v.vmx["numvcpus"] = opts[:cpu]</span><br><span class="line">			end</span><br><span class="line">			config.vm.provider "virtualbox" do |v|</span><br><span class="line">				v.customize ["modifyvm", :id, "--memory", opts[:mem]]</span><br><span class="line">			v.customize ["modifyvm", :id, "--cpus", opts[:cpu]]</span><br><span class="line">				v.customize ["modifyvm", :id, "--name", opts[:name]]</span><br><span class="line">			end</span><br><span class="line">		end</span><br><span class="line">	end</span><br><span class="line">end</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">02 `启动之后进入到对应的centos里面，使得root账户能够登陆，从而使用XShell登陆`</span><br><span class="line">	vagrant up [启动虚拟机]</span><br><span class="line">	vagrant ssh master-kubeadm-k8s [进入manager-node]</span><br><span class="line">	vagrant ssh worker01-kubeadm-k8s [进入worker01-node]</span><br><span class="line">	vagrant ssh worker02-kubeadm-k8s [进入worker02-node]</span><br><span class="line">03 `分别登陆三个节点,执行下面操作,改成可以密码登陆root账户`</span><br><span class="line">	sudo -i [进入root账户]</span><br><span class="line">	vi /etc/ssh/sshd_config [设置root账户可以密码登陆]</span><br><span class="line">		修改PasswordAuthentication yes</span><br><span class="line">	passwd [修改密码]</span><br><span class="line">	systemctl restart sshd [重启sshd服务]</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="3-更新并安装依赖"   >
+          <a href="#3-更新并安装依赖" class="heading-link"><i class="fas fa-link"></i></a>3 更新并安装依赖</h2>
+      <blockquote>
+<p>3台机器都需要执行</p>
+</blockquote>
+<figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">yum -y update</span><br><span class="line">yum install -y conntrack ipvsadm ipset jq sysstat curl iptables libseccomp</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="4-安装Docker"   >
+          <a href="#4-安装Docker" class="heading-link"><i class="fas fa-link"></i></a>4 安装Docker</h2>
+      <blockquote>
+<p>3台机器都需要执行，安装版本为18.09.0</p>
+</blockquote>
+<figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">01 `进入虚拟机`</span><br><span class="line">    vagrant ssh [nodeName]</span><br><span class="line">02 `卸载之前安装的docker`</span><br><span class="line">    sudo yum remove docker docker latest docker-latest-logrotate \</span><br><span class="line">    docker-logrotate docker-engine docker-client docker-client-latest docker-common</span><br><span class="line">03 `安装必要依赖`</span><br><span class="line">    sudo yum install -y yum-utils device-mapper-persistent-data lvm2</span><br><span class="line">04 `添加软件源信息`</span><br><span class="line">    sudo yum-config-manager \</span><br><span class="line">    --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line">    yum list | grep docker-ce</span><br><span class="line">05 `更新yum缓存`</span><br><span class="line">    sudo yum makecache fast</span><br><span class="line">06 `安装docker`</span><br><span class="line">    sudo yum install -y docker-ce-18.09.0 docker-ce-cli-18.09.0 containerd.io [指定安装docker版本]</span><br><span class="line">07 `启动docker并设置开机启动`</span><br><span class="line">    sudo systemctl start docker &amp;&amp; sudo systemctl enable docker</span><br><span class="line">08 `测试docker安装是否成功`</span><br><span class="line">    sudo docker run hello-world</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="5-修改hosts文件"   >
+          <a href="#5-修改hosts文件" class="heading-link"><i class="fas fa-link"></i></a>5 修改hosts文件</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">01 `master`</span><br><span class="line"><span class="meta">#</span><span class="bash"> 设置master的hostname，并且修改hosts文件</span></span><br><span class="line">	sudo hostnamectl set-hostname m</span><br><span class="line">02 `两个worker`</span><br><span class="line"><span class="meta">#</span><span class="bash"> 设置worker01/02的hostname，并且修改hosts文件</span></span><br><span class="line">	sudo hostnamectl set-hostname w1</span><br><span class="line">	sudo hostnamectl set-hostname w2</span><br><span class="line">03 `三台机器`</span><br><span class="line">	vi /etc/hosts</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">192.168.31.100 m</span><br><span class="line">192.168.31.101 w1</span><br><span class="line">192.168.31.102 w2</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">04 `使用ping测试一下`</span><br><span class="line">	ping m</span><br><span class="line">	ping w1</span><br><span class="line">	ping w2</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="6-系统基础前提配置"   >
+          <a href="#6-系统基础前提配置" class="heading-link"><i class="fas fa-link"></i></a>6 系统基础前提配置</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">01 `关闭防火墙`</span><br><span class="line">	systemctl stop firewalld &amp;&amp; systemctl disable firewalld</span><br><span class="line">02 `关闭selinux`</span><br><span class="line">	setenforce 0</span><br><span class="line">	sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config</span><br><span class="line">03 `关闭swap`</span><br><span class="line">	swapoff -a</span><br><span class="line">	sed -i '/swap/s/^\(.*\)$/#\1/g' /etc/fstab</span><br><span class="line">04 `配置iptables的ACCEPT规则`</span><br><span class="line">	iptables -F &amp;&amp; iptables -X &amp;&amp; iptables \</span><br><span class="line">    -F -t nat &amp;&amp; iptables -X -t nat &amp;&amp; iptables -P FORWARD ACCEPT</span><br><span class="line">05 `设置系统参数`</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">cat &lt;&lt;EOF &gt;  /etc/sysctl.d/k8s.conf</span><br><span class="line">net.bridge.bridge-nf-call-ip6tables = 1</span><br><span class="line">net.bridge.bridge-nf-call-iptables = 1</span><br><span class="line">EOF</span><br><span class="line">sysctl --system</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="7-Installing-kubeadm-kubelet-and-kubectl"   >
+          <a href="#7-Installing-kubeadm-kubelet-and-kubectl" class="heading-link"><i class="fas fa-link"></i></a>7 Installing kubeadm, kubelet and kubectl</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">01 `配置yum源`</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">cat &lt;&lt;EOF &gt; /etc/yum.repos.d/kubernetes.repo</span><br><span class="line">[kubernetes]</span><br><span class="line">name=Kubernetes</span><br><span class="line">baseurl=http://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=0</span><br><span class="line">repo_gpgcheck=0</span><br><span class="line">gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg</span><br><span class="line">       http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg</span><br><span class="line">EOF</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">02 `安装kubeadm&amp;kubelet&amp;kubectl`</span><br><span class="line">	yum install -y kubeadm-1.14.0-0 kubelet-1.14.0-0 kubectl-1.14.0-0</span><br><span class="line">03 `docker和k8s设置同一个cgroup`</span><br><span class="line"><span class="meta">#</span><span class="bash"> docker</span></span><br><span class="line">	vi /etc/docker/daemon.json 【文件没内容的话，就新建；有的话，就加上这一句，注意文件的格式[逗号]】</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">&#123;</span><br><span class="line">	"exec-opts": ["native.cgroupdriver=systemd"]</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================  </span></span><br><span class="line">	systemctl restart docker 【`重启docker，一定要执行`】</span><br><span class="line"><span class="meta">#</span><span class="bash"> kubelet</span></span><br><span class="line">	sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf 【`找不到内容没关系`】</span><br><span class="line">	systemctl enable kubelet &amp;&amp; systemctl start kubelet 【`重启kubelet，一定要执行`】</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="8-proxy-pause-scheduler等国内镜像"   >
+          <a href="#8-proxy-pause-scheduler等国内镜像" class="heading-link"><i class="fas fa-link"></i></a>8 proxy/pause/scheduler等国内镜像</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">01 `查看kubeadm使用的镜像`</span><br><span class="line">	kubeadm config images list</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">k8s.gcr.io/kube-apiserver:v1.14.0</span><br><span class="line">k8s.gcr.io/kube-controller-manager:v1.14.0</span><br><span class="line">k8s.gcr.io/kube-scheduler:v1.14.0</span><br><span class="line">k8s.gcr.io/kube-proxy:v1.14.0</span><br><span class="line">k8s.gcr.io/pause:3.1</span><br><span class="line">k8s.gcr.io/etcd:3.3.10</span><br><span class="line">k8s.gcr.io/coredns:1.3.1</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">02 `解决国外镜像不能访问的问题`</span><br><span class="line"><span class="meta">#</span><span class="bash"> 创建kubeadm.sh脚本，用于拉取镜像/打tag/删除原有镜像</span></span><br><span class="line">	vi kubeadm.sh</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line">set -e</span><br><span class="line">KUBE_VERSION=v1.14.0</span><br><span class="line">KUBE_PAUSE_VERSION=3.1</span><br><span class="line">ETCD_VERSION=3.3.10</span><br><span class="line">CORE_DNS_VERSION=1.3.1</span><br><span class="line">GCR_URL=k8s.gcr.io</span><br><span class="line">ALIYUN_URL=registry.cn-hangzhou.aliyuncs.com/google_containers</span><br><span class="line">images=(kube-proxy:$&#123;KUBE_VERSION&#125;</span><br><span class="line">kube-scheduler:$&#123;KUBE_VERSION&#125;</span><br><span class="line">kube-controller-manager:$&#123;KUBE_VERSION&#125;</span><br><span class="line">kube-apiserver:$&#123;KUBE_VERSION&#125;</span><br><span class="line">pause:$&#123;KUBE_PAUSE_VERSION&#125;</span><br><span class="line">etcd:$&#123;ETCD_VERSION&#125;</span><br><span class="line">coredns:$&#123;CORE_DNS_VERSION&#125;)</span><br><span class="line">for imageName in $&#123;images[@]&#125; ; do</span><br><span class="line">	docker pull $ALIYUN_URL/$imageName</span><br><span class="line">	docker tag  $ALIYUN_URL/$imageName $GCR_URL/$imageName</span><br><span class="line">	docker rmi $ALIYUN_URL/$imageName</span><br><span class="line">done</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">03 `运行脚本和查看镜像`</span><br><span class="line">	sh ./kubeadm.sh 【运行脚本】</span><br><span class="line">	docker images 【查看镜像】</span><br><span class="line">04 `将这些镜像推送到自己的阿里云仓库`【可选，根据自己实际的情况】</span><br><span class="line">	docker login --username=happyeveryday2019 registry.cn-hangzhou.aliyuncs.com 【登录自己的阿里云仓库，master节点执行即可】 </span><br><span class="line">	密码：******</span><br><span class="line">	vi kubeadm-push-aliyun.sh</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line">set -e</span><br><span class="line">KUBE_VERSION=v1.14.0</span><br><span class="line">KUBE_PAUSE_VERSION=3.1</span><br><span class="line">ETCD_VERSION=3.3.10</span><br><span class="line">CORE_DNS_VERSION=1.3.1</span><br><span class="line">GCR_URL=k8s.gcr.io</span><br><span class="line">ALIYUN_URL=registry.cn-hangzhou.aliyuncs.com/841863085</span><br><span class="line">images=(kube-proxy:$&#123;KUBE_VERSION&#125;</span><br><span class="line">kube-scheduler:$&#123;KUBE_VERSION&#125;</span><br><span class="line">kube-controller-manager:$&#123;KUBE_VERSION&#125;</span><br><span class="line">kube-apiserver:$&#123;KUBE_VERSION&#125;</span><br><span class="line">pause:$&#123;KUBE_PAUSE_VERSION&#125;</span><br><span class="line">etcd:$&#123;ETCD_VERSION&#125;</span><br><span class="line">coredns:$&#123;CORE_DNS_VERSION&#125;)</span><br><span class="line">for imageName in $&#123;images[@]&#125; ; do</span><br><span class="line">	docker tag $GCR_URL/$imageName $ALIYUN_URL/$imageName</span><br><span class="line">	docker push $ALIYUN_URL/$imageName</span><br><span class="line">	docker rmi $ALIYUN_URL/$imageName</span><br><span class="line">done</span><br><span class="line"><span class="meta">#</span><span class="bash"> ====================================================================================</span></span><br><span class="line">06 `运行脚本`</span><br><span class="line">	sh ./kubeadm-push-aliyun.sh</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="9-kube-init初始化master"   >
+          <a href="#9-kube-init初始化master" class="heading-link"><i class="fas fa-link"></i></a>9 kube init初始化master</h2>
+      <blockquote>
+<p><strong>官网：</strong> <span class="exturl"><a class="exturl__link"   href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/"  target="_blank" rel="noopener">https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/</a><span class="exturl__icon"><i class="fas fa-external-link-alt"></i></span></span></p>
+</blockquote>
+
+        <h3 id="9-1-初始化master节点"   >
+          <a href="#9-1-初始化master节点" class="heading-link"><i class="fas fa-link"></i></a>9.1  初始化master节点</h3>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">01 `初始化master节点`</span><br><span class="line">	kubeadm reset 【初始化集群状态】</span><br><span class="line">	kubeadm init --kubernetes-version=1.14.0 \</span><br><span class="line">    --apiserver-advertise-address=192.168.31.100 \</span><br><span class="line">    --pod-network-cidr=10.244.0.0/16 【初始化master节点】</span><br><span class="line"><span class="meta">#</span><span class="bash"> 注意：记得保存好最后kubeadm join的信息。</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">Your Kubernetes control-plane has initialized successfully!</span><br><span class="line"></span><br><span class="line">To start using your cluster, you need to run the following as a regular user:</span><br><span class="line"></span><br><span class="line">  mkdir -p $HOME/.kube</span><br><span class="line">  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config</span><br><span class="line">  sudo chown $(id -u):$(id -g) $HOME/.kube/config</span><br><span class="line"></span><br><span class="line">You should now deploy a pod network to the cluster.</span><br><span class="line">Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:</span><br><span class="line">  https://kubernetes.io/docs/concepts/cluster-administration/addons/</span><br><span class="line"></span><br><span class="line">Then you can join any number of worker nodes by running the following on each as root:</span><br><span class="line"></span><br><span class="line">kubeadm join 192.168.31.100:6443 --token fag134.3wot9edrvs82vh6d \</span><br><span class="line">    --discovery-token-ca-cert-hash sha256:1df02a06552c02ba0e28e00c80a50e9ff40da81a4cdd53c136a16d3c0233f450</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">02 `根据日志提示执行`</span><br><span class="line">	mkdir -p $HOME/.kube</span><br><span class="line">	sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config</span><br><span class="line">	sudo chown $(id -u):$(id -g) $HOME/.kube/config</span><br><span class="line">03 `查看pod`</span><br><span class="line">	等待一会儿，同时可以发现像etcd，controller，scheduler等组件都以pod的方式安装成功了</span><br><span class="line"><span class="meta">#</span><span class="bash"> 注意：coredns没有启动，需要安装网络插件</span></span><br><span class="line">	kubectl get pods -n kube-system 【查看kube-system的pods】</span><br><span class="line">	kubectl get pods --all-namespaces 【查看所有pods】</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">NAME                        READY   STATUS    RESTARTS   AGE</span><br><span class="line">coredns-fb8b8dccf-f7g6g     0/1     Pending   0          7m30s</span><br><span class="line">coredns-fb8b8dccf-hx765     0/1     Pending   0          7m30s</span><br><span class="line">etcd-m                      1/1     Running   0          6m30s</span><br><span class="line">kube-apiserver-m            1/1     Running   0          6m36s</span><br><span class="line">kube-controller-manager-m   1/1     Running   0          6m42s</span><br><span class="line">kube-proxy-w9m72            1/1     Running   0          7m30s</span><br><span class="line">kube-scheduler-m            1/1     Running   0          6m24s</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">04 `健康检查`</span><br><span class="line">	curl -k https://localhost:6443/healthz</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">[root@master-kubeadm-k8s ~]# curl -k https://localhost:6443/healthz</span><br><span class="line">ok</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br></pre></td></tr></table></div></figure>
+
+
+        <h3 id="9-2-kube-init流程-？？？？？"   >
+          <a href="#9-2-kube-init流程-？？？？？" class="heading-link"><i class="fas fa-link"></i></a>9.2 kube init流程 ？？？？？</h3>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">01 `进行一系列检查，以确定这台机器可以部署kubernetes`</span><br><span class="line">02 `生成kubernetes对外提供服务所需要的各种证书可对应目录`</span><br><span class="line">	/etc/kubernetes/pki/*</span><br><span class="line">03 `为其他组件生成访问kube-ApiServer所需的配置文件`</span><br><span class="line">	ls /etc/kubernetes/</span><br><span class="line">    admin.conf  controller-manager.conf  kubelet.conf  scheduler.conf</span><br><span class="line">04 `为 Master组件生成Pod配置文件`</span><br><span class="line">    ls /etc/kubernetes/manifests/*.yaml</span><br><span class="line">    kube-apiserver.yaml </span><br><span class="line">    kube-controller-manager.yaml</span><br><span class="line">    kube-scheduler.yaml</span><br><span class="line">05 `生成etcd的Pod YAML文件`</span><br><span class="line">    ls /etc/kubernetes/manifests/*.yaml</span><br><span class="line">    kube-apiserver.yaml </span><br><span class="line">    kube-controller-manager.yaml</span><br><span class="line">    kube-scheduler.yaml</span><br><span class="line">	etcd.yaml</span><br><span class="line">06 `一旦这些 YAML文件出现在被 kubelet监视的/etc/kubernetes/manifests/目录下，kubelet就会自动创建这些yaml文件定义的pod，即master组件的容器。master容器启动后，kubeadm会通过检查localhost:443/healthz这个master组件的健康状态检查URL，等待master组件完全运行起来`</span><br><span class="line">07 `为集群生成一个bootstrap token`</span><br><span class="line">08 `将ca.crt等Master节点的重要信息，通过ConfigMap的方式保存在etcd中，工后续部署node节点使用`</span><br><span class="line">09 `最后一步是安装默认插件，kubernetes默认kube-proxy和DNS两个插件是必须安装的`</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="10-部署calico网络插件"   >
+          <a href="#10-部署calico网络插件" class="heading-link"><i class="fas fa-link"></i></a>10 部署calico网络插件</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 选择网络插件</span></span><br><span class="line">	https://kubernetes.io/docs/concepts/cluster-administration/addons/</span><br><span class="line"><span class="meta">#</span><span class="bash"> calico网络插件</span></span><br><span class="line">	https://docs.projectcalico.org/v3.9/getting-started/kubernetes/</span><br><span class="line"><span class="meta">#</span><span class="bash"> 注意：calico，同样在master节点上操作</span></span><br><span class="line">01 `可以先手动pull一下` 【可能拉取较慢】</span><br><span class="line">	curl https://docs.projectcalico.org/v3.9/manifests/calico.yaml | grep image 【版本会变化，需要根   据实际情况拉取镜像】</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">	      image: calico/cni:v3.9.3</span><br><span class="line">          image: calico/pod2daemon-flexvol:v3.9.3</span><br><span class="line">          image: calico/node:v3.9.3</span><br><span class="line">          image: calico/kube-controllers:v3.9.3</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">	docker pull calico/cni:v3.9.3</span><br><span class="line">    docker pull calico/pod2daemon-flexvol:v3.9.3</span><br><span class="line">    docker pull calico/node:v3.9.3</span><br><span class="line">    docker pull calico/kube-controllers:v3.9.3</span><br><span class="line">    `官方镜像拉取太慢，可以用itcrazy`</span><br><span class="line">    docker pull registry.cn-hangzhou.aliyuncs.com/itcrazy2016/kube-controllers:v3.9.3</span><br><span class="line">	docker pull registry.cn-hangzhou.aliyuncs.com/itcrazy2016/cni:v3.9.3</span><br><span class="line">	docker pull registry.cn-hangzhou.aliyuncs.com/itcrazy2016/pod2daemon-flexvol:v3.9.3</span><br><span class="line">	docker pull registry.cn-hangzhou.aliyuncs.com/itcrazy2016/node:v3.9.3</span><br><span class="line">	`打tag`</span><br><span class="line">	docker tag registry.cn-hangzhou.aliyuncs.com/itcrazy2016/kube-controllers:v3.9.3 \</span><br><span class="line">    calico/kube-controllers:v3.9.3</span><br><span class="line">	docker tag registry.cn-hangzhou.aliyuncs.com/itcrazy2016/cni:v3.9.3 \</span><br><span class="line">    calico/cni:v3.9.3</span><br><span class="line">	docker tag registry.cn-hangzhou.aliyuncs.com/itcrazy2016/pod2daemon-flexvol:v3.9.3 \</span><br><span class="line">    calico/pod2daemon-flexvol:v3.9.3</span><br><span class="line">	docker tag registry.cn-hangzhou.aliyuncs.com/itcrazy2016/node:v3.9.3 \</span><br><span class="line">    calico/node:v3.9.3</span><br><span class="line">	`删除registry.cn-hangzhou.aliyuncs.com/itcrazy2016/格式的镜像` </span><br><span class="line"><span class="meta">#</span><span class="bash"> 注意：打tag不会改变imageId，会删除calico的镜像  </span></span><br><span class="line">	docker rmi -f $(docker images registry.cn-hangzhou.aliyuncs.com/itcrazy2016/* -aq)</span><br><span class="line">02 `在k8s中安装calico`</span><br><span class="line">	yum install -y wget</span><br><span class="line">	wget https://docs.projectcalico.org/v3.9/manifests/calico.yaml</span><br><span class="line">	`最新版本已经是3.9.5 需要更改为 3.9.3`</span><br><span class="line">	sed -i "s/v3.9.5/v3.9.3/g" calico.yaml</span><br><span class="line">	kubectl apply -f calico.yaml</span><br><span class="line">03 `确认一下calico是否安装成功`</span><br><span class="line">	kubectl get pods --all-namespaces -w 【实时查看所有的Pods】</span><br><span class="line">04 `删除一个pod 【如有需要的话】`</span><br><span class="line">	kubectl delete pod $podName --grace-period=0 --force -n $namespaceName</span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="11-kube-join"   >
+          <a href="#11-kube-join" class="heading-link"><i class="fas fa-link"></i></a>11 kube join</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">01 记得保存初始化master节点的最后打印信息【注意这边大家要自己的，下面我的只是一个参考】</span><br><span class="line">	kubeadm join 192.168.31.100:6443 --token fag134.3wot9edrvs82vh6d \</span><br><span class="line">    --discovery-token-ca-cert-hash sha256:1df02a06552c02ba0e28e00c80a50e9ff40da81a4cdd53c136a16d3c0233f450【worker上面执行】</span><br><span class="line">02 在master节点上检查集群信息</span><br><span class="line">	kubectl get nodes</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">NAME                   STATUS   ROLES    AGE     VERSION</span><br><span class="line">master-kubeadm-k8s     Ready    master   19m     v1.14.0</span><br><span class="line">worker01-kubeadm-k8s   Ready    &lt;none&gt;   3m6s    v1.14.0</span><br><span class="line">worker02-kubeadm-k8s   Ready    &lt;none&gt;   2m41s   v1.14.0</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br></pre></td></tr></table></div></figure>
+
+
+        <h2 id="12-再次体验Pod"   >
+          <a href="#12-再次体验Pod" class="heading-link"><i class="fas fa-link"></i></a>12 再次体验Pod</h2>
+      <figure class="highlight shell"><div class="table-container"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">01 `定义pod.yml文件，比如pod_nginx_rs.yaml` 【不能使用tab，只能用空格】</span><br><span class="line">	mkdir pod_nginx_rs</span><br><span class="line">	cd pod_nginx_rs</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">cat &gt; pod_nginx_rs.yaml &lt;&lt;EOF</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: ReplicaSet</span><br><span class="line">metadata:</span><br><span class="line">  name: nginx</span><br><span class="line">  labels:</span><br><span class="line">    tier: frontend</span><br><span class="line">spec:</span><br><span class="line">  replicas: 3</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      tier: frontend</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      name: nginx</span><br><span class="line">      labels:</span><br><span class="line">        tier: frontend</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: nginx</span><br><span class="line">        image: nginx</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 80</span><br><span class="line">EOF</span><br><span class="line"><span class="meta">#</span><span class="bash"> =======================================================================================</span></span><br><span class="line">02 `根据pod_nginx_rs.yml文件创建pod`</span><br><span class="line">	kubectl apply -f pod_nginx_rs.yaml</span><br><span class="line">03 `查看pod`</span><br><span class="line">    kubectl get pods</span><br><span class="line">    kubectl get pods -o wide</span><br><span class="line">    kubectl describe pod nginx</span><br><span class="line">04 `感受通过rs将pod扩容`</span><br><span class="line">	kubectl scale rs nginx --replicas=5</span><br><span class="line">	kubectl get pods -o wide</span><br><span class="line">05 `删除pod`</span><br><span class="line">	kubectl delete -f pod_nginx_rs.yaml</span><br></pre></td></tr></table></div></figure>
+
+</div><footer class="post-footer"><div class="post-ending ending"><div class="ending__text">------ 本文结束，感谢您的阅读 ------</div></div><div class="post-copyright copyright"><div class="copyright-author"><span class="copyright-author__name">本文作者: </span><span class="copyright-author__value"><a href="https://nephelo-xyz.github.io">nephelo</a></span></div><div class="copyright-link"><span class="copyright-link__name">本文链接: </span><span class="copyright-link__value"><a href="https://nephelo-xyz.github.io/2020/04/20/K8S%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA%E6%A0%BC%E5%BC%8F%E6%95%B4%E7%90%86/">https://nephelo-xyz.github.io/2020/04/20/K8S%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA%E6%A0%BC%E5%BC%8F%E6%95%B4%E7%90%86/</a></span></div><div class="copyright-notice"><span class="copyright-notice__name">版权声明: </span><span class="copyright-notice__value">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-cn" rel="external nofollow" target="_blank">BY-NC-SA</a> 许可协议。转载请注明出处！</span></div></div><div class="post-tags"><span class="post-tags-item"><span class="post-tags-item__icon"><i class="fas fa-tag"></i></span><a class="post-tags-item__link" href="https://nephelo-xyz.github.io/tags/Devops/">Devops</a></span></div><div class="post-share"><div class="social-share" data-sites="qzone, qq, weibo, wechat, douban, linkedin, facebook, twitter, google">Share to: </div></div><nav class="post-paginator paginator"><div class="paginator-next"><a class="paginator-next__link" href="/2019/12/14/SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D%E6%9C%BA%E5%88%B6/"><span class="paginator-prev__text">SpringBoot自动装配机制</span><span class="paginator-next__icon"><i class="fas fa-angle-right"></i></span></a></div></nav></footer></div></div><div class="comments" id="comments"><div id="lv-container" data-id="city" data-uid="MTAyMC81MDAxMS8yNjUwMg=="></div></div></div><div class="sidebar-wrap" id="sidebar-wrap"><aside class="sidebar" id="sidebar"><div class="sidebar-nav"><span class="sidebar-nav-toc current">文章目录</span><span class="sidebar-nav-ov">站点概览</span></div><section class="sidebar-toc"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-版本统一"><span class="toc-number">1.</span> <span class="toc-text">
+          1 版本统一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-准备3台centos"><span class="toc-number">2.</span> <span class="toc-text">
+          2 准备3台centos</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-更新并安装依赖"><span class="toc-number">3.</span> <span class="toc-text">
+          3 更新并安装依赖</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-安装Docker"><span class="toc-number">4.</span> <span class="toc-text">
+          4 安装Docker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-修改hosts文件"><span class="toc-number">5.</span> <span class="toc-text">
+          5 修改hosts文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-系统基础前提配置"><span class="toc-number">6.</span> <span class="toc-text">
+          6 系统基础前提配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-Installing-kubeadm-kubelet-and-kubectl"><span class="toc-number">7.</span> <span class="toc-text">
+          7 Installing kubeadm, kubelet and kubectl</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-proxy-pause-scheduler等国内镜像"><span class="toc-number">8.</span> <span class="toc-text">
+          8 proxy&#x2F;pause&#x2F;scheduler等国内镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-kube-init初始化master"><span class="toc-number">9.</span> <span class="toc-text">
+          9 kube init初始化master</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-初始化master节点"><span class="toc-number">9.1.</span> <span class="toc-text">
+          9.1  初始化master节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-kube-init流程-？？？？？"><span class="toc-number">9.2.</span> <span class="toc-text">
+          9.2 kube init流程 ？？？？？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#10-部署calico网络插件"><span class="toc-number">10.</span> <span class="toc-text">
+          10 部署calico网络插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#11-kube-join"><span class="toc-number">11.</span> <span class="toc-text">
+          11 kube join</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#12-再次体验Pod"><span class="toc-number">12.</span> <span class="toc-text">
+          12 再次体验Pod</span></a></li></ol></section><!-- ov = overview--><section class="sidebar-ov hide"><div class="sidebar-ov-author"><div class="sidebar-ov-author__avatar"><img class="sidebar-ov-author__avatar_img" src="/images/icons/mm.png" alt="avatar"></div><p class="sidebar-ov-author__text">多喝热水。</p></div><div class="sidebar-ov-social"><a class="sidebar-ov-social-item" href="https://github.com/nephelo-xyz/" target="_blank" rel="noopener" data-popover="Github" data-popover-pos="up"><span class="sidebar-ov-social-item__icon"><i class="fab fa-github"></i></span></a><a class="sidebar-ov-social-item" href="https://weibo.com/u/3832051310/home" target="_blank" rel="noopener" data-popover="微博" data-popover-pos="up"><span class="sidebar-ov-social-item__icon"><i class="fab fa-weibo"></i></span></a><a class="sidebar-ov-social-item" href="https://www.zhihu.com/" target="_blank" rel="noopener" data-popover="知乎" data-popover-pos="up"><span class="sidebar-ov-social-item__icon">知</span></a><a class="sidebar-ov-social-item" href="/images/wechat/me-info.jpg" target="_blank" rel="noopener" data-popover="微信" data-popover-pos="up"><span class="sidebar-ov-social-item__icon"><i class="fab fa-weixin"></i></span></a><a class="sidebar-ov-social-item" href="1103350042" target="_blank" rel="noopener" data-popover="QQ" data-popover-pos="up"><span class="sidebar-ov-social-item__icon"><i class="fab fa-qq"></i></span></a></div><div class="sidebar-ov-state"><a class="sidebar-ov-state-item sidebar-ov-state-item--posts" href="/archives/"><div class="sidebar-ov-state-item__count">4</div><div class="sidebar-ov-state-item__name">归档</div></a><a class="sidebar-ov-state-item sidebar-ov-state-item--categories" href="/categories/"><div class="sidebar-ov-state-item__count">0</div><div class="sidebar-ov-state-item__name">分类</div></a><a class="sidebar-ov-state-item sidebar-ov-state-item--tags" href="/tags/"><div class="sidebar-ov-state-item__count">3</div><div class="sidebar-ov-state-item__name">标签</div></a></div><div class="sidebar-ov-cc"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-cn" target="_blank" rel="noopener" data-popover="知识共享许可协议" data-popover-pos="up"><img src="/images/cc-by-nc-sa.svg"></a></div></section><div class="sidebar-reading"><div class="sidebar-reading-info"><span class="sidebar-reading-info__text">你已阅读了 </span><span class="sidebar-reading-info__num">0</span></div><div class="sidebar-reading-line"></div></div></aside></div><div class="clearfix"></div></div></main><footer class="footer" id="footer"><div class="footer-inner"><div><span>Copyright © 2019~2020</span><span class="footer__icon"><i class="fas fa-heart"></i></span><span>nephelo</span></div><div><span>由 <a href="http://hexo.io/" title="Hexo" target="_blank" rel="noopener">Hexo</a> 强力驱动</span><span> v4.2.0</span><span class="footer__devider">|</span><span>主题 - <a href="https://github.com/liuyib/hexo-theme-stun/" title="Stun" target="_blank" rel="noopener">Stun</a></span><span> v2.0.0</span></div><div class="busuanzi"><span class="busuanzi-siteuv"><span class="busuanzi-siteuv__icon"><i class="fas fa-user"></i></span><span class="busuanzi-siteuv__info">访问人数</span><span class="busuanzi-siteuv__value" id="busuanzi_value_site_uv"></span></span><span class="busuanzi-sitepv"><span class="busuanzi-siteuv__icon"><i class="fas fa-eye"></i></span><span class="busuanzi-siteuv__info">浏览总量</span><span class="busuanzi-siteuv__value" id="busuanzi_value_site_pv"></span></span></div></div></footer><div class="loading-bar" id="loading-bar"><div class="loading-bar__progress"></div></div><div class="back2top" id="back2top"><span class="back2top__icon"><i class="fas fa-rocket"></i></span></div></div><div class="search-mask"></div><div class="search-popup"><span class="search-close"></span><div class="search-input"><input placeholder="搜索文章（支持多关键词，请用空格分隔）"></div><div class="search-results"></div></div><script src="https://cdn.jsdelivr.net/npm/jquery@v3.4.1/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@1.5.2/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@1.5.2/velocity.ui.min.js"></script><script src="https://cdn.jsdelivr.net/npm/ribbon.js@latest/dist/ribbon.min.js" size="120" alpha="0.6" zIndex="-1"></script><script src="https://cdn.jsdelivr.net/npm/social-share.js@1.0.16/dist/js/social-share.min.js"></script><script>function initSearch() {
+  var isXML = true;
+  var search_path = 'search.json';
+
+  if (!search_path) {
+    search_path = 'search.xml';
+  } else if (/json$/i.test(search_path)) {
+    isXML = false;
+  }
+
+  var path = '/' + search_path;
+  $.ajax({
+    url: path,
+    dataType: isXML ? 'xml' : 'json',
+    async: true,
+    success: function (res) {
+      var datas = isXML ? $('entry', res).map(function () {
+        // 将 XML 转为 JSON
+        return {
+          title: $('title', this).text(),
+          content: $('content', this).text(),
+          url: $('url', this).text()
+        };
+      }).get() : res;
+      var $input = $('.search-input input');
+      var $result = $('.search-results');
+      // 搜索对象（标题、内容）的权重，影响显示顺序
+      var WEIGHT = { title: 100, content: 1 };
+      var searchPost = function () {
+        var searchText = $input.val().toLowerCase().trim();
+        // 根据空白字符分隔关键字
+        var keywords = searchText.split(/[\s]+/);
+        // 搜索结果
+        var matchPosts = [];
+
+        // 有多个关键字时，将原文字整个保存下来
+        if (keywords.length > 1) {
+          keywords.push(searchText);
+        }
+        // 防止未输入字符时搜索
+        if (searchText.length > 0) {
+          datas.forEach(function (data) {
+            var isMatch  = false;
+            // 没有标题的文章使用预设的 i18n 变量代替
+            var title = (data.title && data.title.trim()) || '[ 文章无标题 ]';
+            var titleLower = title && title.toLowerCase();
+            // 删除 HTML 标签 和 所有空白字符
+            var content = data.content && data.content.replace(/<[^>]+>/g, '');
+            var contentLower = content && content.toLowerCase();
+            // 删除重复的 /
+            var postURL = data.url && decodeURI(data.url).replace(/\/{2,}/g, '/');
+            // 标题中匹配到的关键词
+            var titleHitSlice = [];
+            // 内容中匹配到的关键词
+            var contentHitSlice = [];
+
+            keywords.forEach(function (keyword) {
+              /**
+              * 获取匹配的关键词的索引
+              * @param {String} keyword 要匹配的关键字
+              * @param {String} text 原文字
+              * @param {Boolean} caseSensitive 是否区分大小写
+              * @param {Number} weight 匹配对象的权重。权重大的优先显示
+              * @return {Array}
+              */
+              function getIndexByword (word, text, caseSensitive, weight) {
+                if (!word || !text) {
+                  return [];
+                };
+
+                var startIndex = 0; // 每次匹配的开始索引
+                var index = -1;     // 匹配到的索引值
+                var result = [];    // 匹配结果
+
+                if (!caseSensitive) {
+                  word = word.toLowerCase();
+                  text = text.toLowerCase();
+                }
+
+                while((index = text.indexOf(word, startIndex)) !== -1) {
+                  var hasMatch = false;
+                  // 索引位置相同的关键词，保留长度较长的
+                  titleHitSlice.forEach(function (hit) {
+                    if (hit.index === index && hit.word.length < word.length) {
+                      hit.word = word;
+                      hasMatch = true;
+                    }
+                  });
+                  startIndex = index + word.length;
+                  !hasMatch && result.push({ index: index, word: word, weight: weight });
+                }
+                return result;
+              }
+              titleHitSlice = titleHitSlice.concat(getIndexByword(keyword, titleLower, false, WEIGHT.title));
+              contentHitSlice = contentHitSlice.concat(getIndexByword(keyword, contentLower, false, WEIGHT.content));
+            });
+
+            var hitTitle = titleHitSlice.length;
+            var hitContent = contentHitSlice.length;
+
+            if (hitTitle > 0 || hitContent > 0) {
+              isMatch = true;
+            }
+            if (isMatch) {
+              ;[titleHitSlice, contentHitSlice].forEach(function (hit) {
+                // 按照匹配文字的索引的递增顺序排序
+                hit.sort(function (left, right) {
+                  return left.index - right.index;
+                });
+              });
+              /**
+              * 给文本中匹配到的关键词添加标记，从而进行高亮显示
+              * @param {String} text 原文本
+              * @param {Array} hitSlice 匹配项的索引信息
+              * @param {Number} start 开始索引
+              * @param {Number} end 结束索引
+              * @return {String}
+              */
+              function highlightKeyword (text, hitSlice, start, end) {
+                if (!text || !hitSlice || !hitSlice.length) {
+                  return;
+                }
+
+                var result = '';
+                var startIndex = start;
+                var endIndex = end;
+                hitSlice.forEach(function (hit) {
+                  if (hit.index < startIndex) {
+                    return;
+                  }
+
+                  var hitWordEnd = hit.index + hit.word.length;
+                  result += text.slice(startIndex, hit.index);
+                  result += '<b>' + text.slice(hit.index, hitWordEnd) + '</b>';
+                  startIndex = hitWordEnd;
+                });
+                result += text.slice(startIndex, endIndex);
+                return result;
+              }
+
+              var postData = {};
+              // 文章总的搜索权重
+              var postWeight = titleHitSlice.length * WEIGHT.title + contentHitSlice.length * WEIGHT.content;
+              // 标记匹配关键词后的标题
+              var postTitle = highlightKeyword(title, titleHitSlice, 0, title.length) || title;
+              // 标记匹配关键词后的内容
+              var postContent;
+              // 显示内容的长度
+              var SHOW_WORD_LENGTH = 200;
+              // 命中关键词前的字符显示长度
+              var SHOW_WORD_FRONT_LENGTH = 20;
+              var SHOW_WORD_END_LENGTH = SHOW_WORD_LENGTH - SHOW_WORD_FRONT_LENGTH;
+
+              // 截取匹配的第一个字符，前后共 200 个字符来显示
+              if (contentHitSlice.length > 0) {
+                var firstIndex = contentHitSlice[0].index;
+                var start = firstIndex > SHOW_WORD_FRONT_LENGTH ? firstIndex - SHOW_WORD_FRONT_LENGTH : 0;
+                var end = firstIndex + SHOW_WORD_END_LENGTH;
+                postContent = highlightKeyword(content, contentHitSlice, start, end);
+              } else { // 未匹配到内容，直接截取前 200 个字符来显示
+                postContent = content.slice(0, SHOW_WORD_LENGTH);
+              }
+              postData.title = postTitle;
+              postData.content = postContent;
+              postData.url = postURL;
+              postData.weight = postWeight;
+              matchPosts.push(postData);
+            }
+          });
+        }
+
+        var resultInnerHtml = '';
+        if (matchPosts.length) {
+          // 按权重递增的顺序排序，使权重大的优先显示
+          matchPosts.sort(function (left, right) {
+            return right.weight - left.weight;
+          });
+          resultInnerHtml += '<ul>';
+          matchPosts.forEach(function (post) {
+            resultInnerHtml += '<li><a class="search-results-title" href="' + post.url + '">';
+            resultInnerHtml += post.title;
+            resultInnerHtml += '</a><div class="search-results-content">';
+            resultInnerHtml += post.content;
+            resultInnerHtml += '</div></li>';
+          });
+          resultInnerHtml += '</ul>';
+        } else {
+          resultInnerHtml += '<div class="search-results-none"><i class="far fa-meh"></i></div>';
+        }
+        $result.html(resultInnerHtml);
+      };
+      $input.on('input', searchPost);
+      $input.on('keyup', function (e) {
+        if (e.keyCode === Stun.utils.codeToKeyCode('Enter')) {
+          searchPost();
+        }
+      });
+    }
+  });
+}
+
+function closeSearch () {
+  $('body').css({ overflow: 'auto' });
+  $('.search-popup').css({ display: 'none' });
+  $('.search-mask').css({ display: 'none' });
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+  Stun.utils.pjaxReloadLocalSearch = function () {
+    $('.header-nav-search').on('click', function (e) {
+      e.stopPropagation();
+      $('body').css('overflow', 'hidden');
+      $('.search-popup')
+        .velocity('stop')
+        .velocity('transition.expandIn', {
+          duration: 300,
+          complete: function () {
+            $('.search-popup input').focus();
+          }
+        });
+      $('.search-mask')
+        .velocity('stop')
+        .velocity('transition.fadeIn', {
+          duration: 300
+        });
+
+      initSearch();
+    });
+    $('.search-mask, .search-close').on('click', function () {
+      closeSearch();
+    });
+    $(document).on('keydown', function (e) {
+      // Escape <=> 27
+      if (e.keyCode === Stun.utils.codeToKeyCode('Escape')) {
+        closeSearch();
+      }
+    });
+  };
+
+  Stun.utils.pjaxReloadLocalSearch();
+}, false);</script><script src="https://cdn.jsdelivr.net/gh/sukkaw/busuanzi@latest/bsz.pure.mini.js" async></script><script>function loadLivere () {
+  var d = document, s = d.createElement('script');
+
+  if (!d.getElementById('lv-container')) {
+    return;
+  }
+  if (typeof LivereTower === 'function') {
+    return;
+  }
+  s.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+  if (false) {
+    s.setAttribute('data-pjax-rm', '');
+  }
+  (d.head || d.body).appendChild(s);
+}
+
+if (false) {
+  loadLivere();
+} else {
+  window.addEventListener('DOMContentLoaded', loadLivere, false);
+}</script><script src="/js/utils.js?v=2.0.0"></script><script src="/js/stun-boot.js?v=2.0.0"></script><script src="/js/scroll.js?v=2.0.0"></script><script src="/js/header.js?v=2.0.0"></script><script src="/js/sidebar.js?v=2.0.0"></script></body></html>
